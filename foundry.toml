@@ -1,0 +1,32 @@
+[profile.default]
+src = "src"
+test = "test"
+out = "out"
+libs = ["lib"]
+solc_version = "0.8.26"
+offline = true
+evm_version = "cancun"
+optimizer = true
+optimizer_runs = 200
+via_ir = false
+bytecode_hash = "none"
+cbor_metadata = false
+ffi = false
+fs_permissions = []
+remappings = [
+  "forge-std/=lib/forge-std/src/",
+  "v4-core/=lib/v4-core/",
+  "solmate/=lib/solmate/",
+]
+
+[profile.default.fuzz]
+runs = 256
+
+[profile.default.invariant]
+runs = 48
+depth = 48
+fail_on_revert = true
+
+[fmt]
+line_length = 110
+ignore = ["lib/**", "test/scratch/**"]

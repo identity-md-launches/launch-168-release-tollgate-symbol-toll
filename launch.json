@@ -1,0 +1,33 @@
+{
+  "kind": "univ4_hook",
+  "name": "TOLLGATE",
+  "chainId": 1,
+  "hook": {
+    "contract": "TollgateHook",
+    "source": "src/TollgateHook.sol",
+    "constructorArgs": [
+      "0x000000000004444c5dc75cB358380D2e3dE08A90"
+    ],
+    "permissions": [
+      "beforeSwap",
+      "afterSwap",
+      "beforeSwapReturnDelta",
+      "afterSwapReturnDelta"
+    ],
+    "flags": "0x00CC"
+  },
+  "token": {
+    "contract": "TollToken",
+    "source": "src/TollToken.sol",
+    "name": "TOLLGATE",
+    "symbol": "TOLL",
+    "decimals": 18
+  },
+  "pool": {
+    "pairedCurrency": "0x0000000000000000000000000000000000000000",
+    "fee": 3000,
+    "tickSpacing": 60,
+    "initialPrice": "79228162514264337593543950336000"
+  },
+  "notes": "TOLLGATE (TOLL) is a technical rehearsal of a fee-and-cap Uniswap v4 hook ahead of a later production launch by the same requester. It is not a consumer product and claims nothing beyond what src/TollgateHook.sol and src/TollToken.sol do. CREATOR FEE DISCLOSURE: TollgateHook charges 2% in native ETH on every buy (ETH -> TOLL) and 2% on every sell (TOLL -> ETH) of any pool on this hook whose currency0 is native ETH. 100% of those fees are owed to the fixed creator wallet 0x70c6C4fcaAb11151FCEDb32eaaC3431547193A0a until exactly 1 ETH has accrued (the cap); the permissionless payCreator() pays what is owed and reverts NothingDue otherwise, and the creator can never receive more than 1 ETH in total from this contract. After the cap every further fee is burnable: the permissionless burnEth() sends the whole burnable amount to 0x000000000000000000000000000000000000dEaD (an address nobody holds a key for), at most once every 5 blocks counted from deployment (TooSoon) and only when at least 0.01 ETH is burnable (NothingToBurn). CapReached(totalFees, blockNumber) is emitted exactly once, in the swap that crosses the cap. IMMUTABILITY: recipient, cap, rates and sink are compile-time constants. There is no owner, admin, pause, upgrade, proxy, fee setter, recipient setter or sweep. The hook's only constructor argument is the PoolManager address above (canonical Uniswap v4 PoolManager on Ethereum mainnet); everything else is a literal in the source. If the launch is retargeted to another chain, substitute that chain's canonical PoolManager and re-mine the CREATE2 salt; no recompilation is needed. PERMISSIONS: exactly beforeSwap, afterSwap, beforeSwapReturnDelta, afterSwapReturnDelta (address mask 0x00CC). No beforeInitialize or other initialize gate, no liquidity or donate callbacks: anyone can open pools and LPs can always exit. The constructor validates the permissions. MECHANICS: exact-in buys and exact-out sells pay the fee from beforeSwap as a positive specified BeforeSwapDelta; exact-out buys and exact-in sells pay 2% of the ETH the pool moved from afterSwap as a positive unspecified delta. The fee is collected inside the swap as ERC-6909 claims on id 0 via poolManager.mint(hook, 0, fee); no ETH is pushed and no contract other than the PoolManager is called from a swap callback, so the first buy into a pool holding no ETH works. A partial fill (raw pool delta on the specified side != amountSpecified + fee) reverts the whole swap with PartialFill. Pools whose currency0 is not native ETH pay nothing. Fees below 50 wei round to zero. Ledger: creatorEntitlement = min(1 ETH, totalFees); burnable = totalFees - creatorEntitlement - burned; invariant PoolManager.balanceOf(hook, 0) >= totalFees - creatorPaid - burned. Claims third parties transfer to the hook are not counted and are stuck forever. The reentrancy lock is transient slot 1; the compiled runtime of every contract contains no DELEGATECALL, CALLCODE or SELFDESTRUCT. TOKEN: TollToken is a self-contained ERC-20 with a zero-argument constructor that mints the entire fixed supply to msg.sender (the LaunchFactory); 18 decimals; burn and burnFrom only reduce supply; no owner, mint, pause or proxy. POOL: currency0 native ETH, currency1 TOLL, static LP fee 3000 (0.30%, separate from the hook fee, goes to LPs), tick spacing 60, initialPrice is sqrtPriceX96 for 1 ETH = 1,000,000 TOLL. test/LaunchRehearsal.t.sol initializes the pool from the deployer, seeds 80% of the supply one-sided below the opening price, buys first into the ETH-less pool and sells after a buy. REVIEW POINTS: verify the creator cap (1 ETH), the recipient constant, the sink constant and that nothing can change them. Tests passing is not an audit; an independent adversarial review and a fork rehearsal against the live PoolManager are required before any production launch. Build settings and vendored v4-core 1.0.2 are in foundry.toml and docs/dependencies.md; disclosure in README.md and docs/DISCLOSURE.md."
+}
